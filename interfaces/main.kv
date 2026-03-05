@@ -1,0 +1,83 @@
+ScreenManager:
+    id: sm
+    EstoqueScreen:
+        name: "estoque"
+    HistoricoScreen:
+        name: "historico"
+
+
+<EstoqueScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+
+        MDTopAppBar:
+            title: "Controle de Estoque"
+            right_action_items: [["history", lambda x: app.abrir_historico()]]
+
+        MDCard:
+            padding: 20
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDBoxLayout:
+                orientation: "vertical"
+                spacing: 10
+                adaptive_height: True
+
+                MDTextField:
+                    id: campo_nome
+                    hint_text: "Nome do Produto"
+
+                MDTextField:
+                    id: campo_quantidade
+                    hint_text: "Quantidade"
+                    input_filter: "int"
+
+                MDTextField:
+                    id: campo_local
+                    hint_text: "Local"
+
+                MDRaisedButton:
+                    text: "Adicionar Produto"
+                    on_release: app.adicionar_produto()
+
+        ScrollView:
+            MDBoxLayout:
+                id: lista_produtos
+                orientation: "vertical"
+                adaptive_height: True
+                padding: 20
+                spacing: 10
+
+
+<HistoricoScreen>:
+    MDBoxLayout:
+        orientation: "vertical"
+
+        MDTopAppBar:
+            title: "Relatórios"
+            left_action_items: [["arrow-left", lambda x: app.voltar_estoque()]]
+            
+
+        MDBoxLayout:
+            orientation: "vertical"
+            padding: 20
+            spacing: 20
+            size_hint_y: None
+            height: self.minimum_height
+
+            MDRaisedButton:
+                text: "Gerar Relatório"
+                on_release: app.gerar_relatorio()
+
+            MDRaisedButton:
+                text: "Gerar Gráfico"
+                on_release: app.gerar_grafico()
+
+        ScrollView:
+            MDBoxLayout:
+                id: relatorio_container
+                orientation: "vertical"
+                adaptive_height: True
+                padding: 20
+                spacing: 20
