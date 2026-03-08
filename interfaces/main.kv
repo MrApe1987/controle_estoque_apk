@@ -1,141 +1,136 @@
-ScreenManager:
+ScreenManager: 
+    LoginScreen: 
+        name: "login" 
+    RegisterScreen: 
+        name: "register" 
+    EstoqueScreen: 
+        name: "estoque" 
+    HistoricoScreen: 
+        name: "historico" 
 
-    LoginScreen:
-        name: "login"
+<LoginScreen>: 
+    MDBoxLayout: 
+        orientation: "vertical" 
+        spacing: 20 
+        padding: 40 
 
-    RegisterScreen:
-        name: "register"
-
-    EstoqueScreen:
-        name: "estoque"
-
-    HistoricoScreen:
-        name: "historico"
-
-
-<LoginScreen>:
-
-    MDBoxLayout:
-        orientation: "vertical"
-        spacing: 20
-        padding: 40
-
-        MDLabel:
-            text: "Login"
-            halign: "center"
+        MDLabel: 
+            text: "Login" 
+            halign: "center" 
+            theme_text_color: "Primary"
             font_style: "H4"
 
-        MDTextField:
-            id: usuario
+        MDTextField: 
+            id: usuario 
             hint_text: "Usuário"
+            mode: "rectangle"
 
-        MDTextField:
-            id: senha
+        MDTextField: 
+            id: senha 
             hint_text: "Senha"
-            password: True
+            mode: "rectangle"
+            password: True 
 
-        MDRaisedButton:
+        MDRectangleFlatButton: 
             text: "Entrar"
-            pos_hint: {"center_x": .5}
-            on_release: app.login()
+            pos_hint: {"center_x": .5} 
+            on_release: app.login() 
 
-        MDFlatButton:
+        MDTextButton: 
             text: "Criar conta"
-            pos_hint: {"center_x": .5}
-            on_release: app.root.current = "register"
+            pos_hint: {"center_x": .5} 
+            on_release: app.root.current = "register" 
 
+<RegisterScreen>: 
+    MDBoxLayout: 
+        orientation: "vertical" 
+        spacing: 20 
+        padding: 40 
 
-<RegisterScreen>:
-
-    MDBoxLayout:
-        orientation: "vertical"
-        spacing: 20
-        padding: 40
-
-        MDLabel:
-            text: "Criar Conta"
-            halign: "center"
+        MDLabel: 
+            text: "Criar Conta" 
+            halign: "center" 
+            theme_text_color: "Primary"
             font_style: "H4"
 
-        MDTextField:
-            id: usuario
+        MDTextField: 
+            id: usuario 
             hint_text: "Usuário"
+            mode: "rectangle"
 
-        MDTextField:
-            id: senha
+        MDTextField: 
+            id: senha 
             hint_text: "Senha"
-            password: True
+            mode: "rectangle"
+            password: True 
 
-        MDRaisedButton:
+        MDRectangleFlatButton: 
             text: "Registrar"
-            pos_hint: {"center_x": .5}
-            on_release: app.registrar_usuario()
+            pos_hint: {"center_x": .5} 
+            on_release: app.registrar_usuario() 
 
-        MDFlatButton:
+        MDTextButton: 
             text: "Voltar"
-            pos_hint: {"center_x": .5}
-            on_release: app.root.current = "login"
+            pos_hint: {"center_x": .5} 
+            on_release: app.root.current = "login" 
 
+<EstoqueScreen>: 
+    MDBoxLayout: 
+        orientation: "vertical" 
 
-<EstoqueScreen>:
-
-    MDBoxLayout:
-        orientation: "vertical"
-
-        MDTopAppBar:
+        MDTopAppBar: 
             title: "Controle de Estoque"
             left_action_items: [["logout", lambda x: app.logout()]]
             right_action_items: [["history", lambda x: app.abrir_historico()]]
 
-        MDBoxLayout:
-            orientation: "vertical"
-            padding: 10
-            spacing: 10
+        MDBoxLayout: 
+            orientation: "vertical" 
+            padding: 10 
+            spacing: 10 
 
-            MDTextField:
-                id: campo_nome
+            MDTextField: 
+                id: campo_nome 
                 hint_text: "Nome do produto"
+                mode: "rectangle"
 
-            MDTextField:
-                id: campo_quantidade
+            MDTextField: 
+                id: campo_quantidade 
                 hint_text: "Quantidade"
                 input_filter: "int"
+                mode: "rectangle"
 
-            MDTextField:
-                id: campo_local
+            MDTextField: 
+                id: campo_local 
                 hint_text: "Local"
+                mode: "rectangle"
 
-            MDRaisedButton:
+            MDRectangleFlatButton: 
                 text: "Adicionar Produto"
-                pos_hint: {"center_x": .5}
+                pos_hint: {"center_x": .5} 
                 on_release: app.adicionar_produto()
 
-            ScrollView:
+            ScrollView: 
+                MDBoxLayout: 
+                    id: lista_produtos 
+                    orientation: "vertical" 
+                    spacing: 10 
+                    size_hint_y: None 
+                    height: self.minimum_height 
+                    padding: 10 
 
-                MDBoxLayout:
-                    id: lista_produtos
-                    orientation: "vertical"
-                    spacing: 10
-                    size_hint_y: None
-                    height: self.minimum_height
-                    padding: 10
+<HistoricoScreen>: 
+    MDBoxLayout: 
+        orientation: "vertical" 
 
-
-<HistoricoScreen>:
-
-    MDBoxLayout:
-        orientation: "vertical"
-
-        MDTopAppBar:
+        MDTopAppBar: 
             title: "Histórico de Retiradas"
             left_action_items: [["arrow-left", lambda x: app.voltar_estoque()]]
 
-        ScrollView:
-
-            MDBoxLayout:
-                id: relatorio_container
-                orientation: "vertical"
-                spacing: 10
-                padding: 20
-                size_hint_y: None
+        ScrollView: 
+            MDBoxLayout: 
+                id: relatorio_container 
+                orientation: "vertical" 
+                spacing: 10 
+                padding: 20 
+                size_hint_y: None 
                 height: self.minimum_height
