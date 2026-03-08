@@ -1,12 +1,1 @@
-[
-  {
-    "nome": "lampada fria",
-    "quantidade": 50,
-    "local": "torre 17"
-  },
-  {
-    "nome": "plafon sobrepor",
-    "quantidade": 20,
-    "local": "torre 17"
-  }
-]
+[{"nome": "lampada de emergencia intelbras ", "quantidade": 9, "local": "t 17"}, {"nome": "plafon sobrepor", "quantidade": 1, "local": "t 17"}]

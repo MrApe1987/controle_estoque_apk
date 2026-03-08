@@ -1,3 +1,9 @@
+from kivy.config import Config
+
+Config.set('input', 'mouse', 'mouse')
+Config.set('input', 'mtdev', '')
+Config.set('kivy', 'log_level', 'warning')
+
 from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.uix.screenmanager import Screen
@@ -5,15 +11,22 @@ from kivymd.uix.card import MDCard
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.label import MDLabel
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.button import MDFlatButton
 from kivy.clock import Clock
-from kivy.metrics import dp
-from kivy.uix.widget import Widget
-from kivy.graphics import Color, Rectangle
-from kivy.animation import Animation
-from kivy.uix.scrollview import ScrollView
-from random import random
+
 import json
 import os
+
+
+# TELAS
+class LoginScreen(Screen):
+    pass
+
+
+class RegisterScreen(Screen):
+    pass
 
 
 class EstoqueScreen(Screen):
@@ -24,6 +37,7 @@ class HistoricoScreen(Screen):
     pass
 
 
+# ITEM PRODUTO
 class ProdutoItem(MDCard):
 
     def __init__(self, nome="", quantidade=0, local="", **kwargs):
@@ -44,7 +58,7 @@ class ProdutoItem(MDCard):
         self.label = MDLabel()
 
         btn_menos = MDIconButton(icon="minus")
-        btn_menos.bind(on_release=self.diminuir)
+        btn_menos.bind(on_release=self.retirar)
 
         btn_mais = MDIconButton(icon="plus")
         btn_mais.bind(on_release=self.aumentar)
@@ -62,6 +76,7 @@ class ProdutoItem(MDCard):
         self.atualizar_texto()
 
     def atualizar_texto(self):
+
         self.label.text = f"{self.nome}\nLocal: {self.local} | Estoque: {self.quantidade}"
 
         if self.quantidade <= 2:
@@ -71,44 +86,139 @@ class ProdutoItem(MDCard):
             self.label.theme_text_color = "Primary"
 
     def aumentar(self, *args):
+
         self.quantidade += 1
         self.atualizar_texto()
+
         MDApp.get_running_app().salvar_produtos()
 
-    def diminuir(self, *args):
-        if self.quantidade > 0:
-            self.quantidade -= 1
-            self.atualizar_texto()
-            MDApp.get_running_app().salvar_produtos()
+    # POPUP PARA RETIRADA
+    def retirar(self, *args):
+
+        app = MDApp.get_running_app()
+
+        campo = MDTextField(
+            hint_text="Quantidade a retirar",
+            input_filter="int"
+        )
+
+        def confirmar(*args):
+
+            if campo.text.isdigit():
+
+                qtd = int(campo.text)
+
+                if qtd <= self.quantidade:
+
+                    self.quantidade -= qtd
+                    self.atualizar_texto()
+
+                    app.registrar_retirada(self.nome, qtd)
+
+                    app.salvar_produtos()
+
+            dialog.dismiss()
+
+        dialog = MDDialog(
+            title="Retirar produto",
+            type="custom",
+            content_cls=campo,
+            buttons=[
+                MDFlatButton(
+                    text="Cancelar",
+                    on_release=lambda x: dialog.dismiss()
+                ),
+                MDFlatButton(
+                    text="Confirmar",
+                    on_release=confirmar
+                ),
+            ],
+        )
+
+        dialog.open()
 
     def remover(self, *args):
+
         if self.parent:
             self.parent.remove_widget(self)
-            MDApp.get_running_app().salvar_produtos()
+
+        MDApp.get_running_app().salvar_produtos()
 
 
+# APP
 class EstoqueApp(MDApp):
 
+    usuario_logado = ""
+
     def build(self):
-        self.theme_cls.theme_style = "Light"
+
         self.theme_cls.primary_palette = "Blue"
+
         return Builder.load_file("interfaces/main.kv")
 
     def on_start(self):
-        Clock.schedule_once(self.carregar_produtos, 0.3)
 
-    # --------------------------
+        Clock.schedule_once(self.carregar_produtos, 0.2)
+
+    # LOGIN
+    def login(self):
+
+        tela = self.root.get_screen("login")
+
+        usuario = tela.ids.usuario.text
+        senha = tela.ids.senha.text
+
+        if os.path.exists("usuarios.json"):
+
+            with open("usuarios.json", "r") as f:
+                usuarios = json.load(f)
+
+                if usuario in usuarios and usuarios[usuario] == senha:
+
+                    self.usuario_logado = usuario
+                    self.root.current = "estoque"
+
+    # REGISTRO
+    def registrar_usuario(self):
+
+        tela = self.root.get_screen("register")
+
+        usuario = tela.ids.usuario.text
+        senha = tela.ids.senha.text
+
+        usuarios = {}
+
+        if os.path.exists("usuarios.json"):
+
+            with open("usuarios.json", "r") as f:
+                usuarios = json.load(f)
+
+        usuarios[usuario] = senha
+
+        with open("usuarios.json", "w") as f:
+            json.dump(usuarios, f)
+
+        self.root.current = "login"
+
+    # LOGOUT
+    def logout(self):
+
+        self.usuario_logado = ""
+        self.root.current = "login"
+
     # ADICIONAR PRODUTO
-    # --------------------------
     def adicionar_produto(self):
+
         tela = self.root.get_screen("estoque")
 
-        nome = tela.ids.campo_nome.text.strip()
-        quantidade = tela.ids.campo_quantidade.text.strip()
-        local = tela.ids.campo_local.text.strip()
+        nome = tela.ids.campo_nome.text
+        quantidade = tela.ids.campo_quantidade.text
+        local = tela.ids.campo_local.text
 
-        if nome and quantidade.isdigit() and local:
+        if nome and quantidade.isdigit():
+
             item = ProdutoItem(nome, int(quantidade), local)
+
             tela.ids.lista_produtos.add_widget(item)
 
             tela.ids.campo_nome.text = ""
@@ -117,32 +227,35 @@ class EstoqueApp(MDApp):
 
             self.salvar_produtos()
 
-    # --------------------------
-    # SALVAR JSON
-    # --------------------------
+    # SALVAR PRODUTOS
     def salvar_produtos(self):
+
         tela = self.root.get_screen("estoque")
+
         produtos = []
 
         for item in tela.ids.lista_produtos.children:
+
             produtos.append({
                 "nome": item.nome,
                 "quantidade": item.quantidade,
                 "local": item.local
             })
 
-        with open("produtos.json", "w", encoding="utf-8") as f:
-            json.dump(produtos, f, ensure_ascii=False, indent=2)
+        with open("produtos.json", "w") as f:
+            json.dump(produtos, f)
 
-    # --------------------------
-    # CARREGAR JSON
-    # --------------------------
+    # CARREGAR PRODUTOS
     def carregar_produtos(self, *args):
+
         tela = self.root.get_screen("estoque")
 
         if os.path.exists("produtos.json"):
-            with open("produtos.json", "r", encoding="utf-8") as f:
+
+            with open("produtos.json", "r") as f:
+
                 for dic in json.load(f):
+
                     tela.ids.lista_produtos.add_widget(
                         ProdutoItem(
                             dic["nome"],
@@ -151,125 +264,53 @@ class EstoqueApp(MDApp):
                         )
                     )
 
-    # --------------------------
-    # RELATÓRIO
-    # --------------------------
-    def gerar_relatorio(self):
-        texto = "RELATÓRIO DE ESTOQUE\n\n"
+    # HISTÓRICO
+    def registrar_retirada(self, produto, qtd):
 
-        if os.path.exists("produtos.json"):
-            with open("produtos.json", "r", encoding="utf-8") as f:
-                for dic in json.load(f):
-                    texto += f"{dic['nome']} - {dic['local']} - {dic['quantidade']}\n"
+        historico = []
 
-        tela = self.root.get_screen("historico")
-        tela.ids.relatorio_container.clear_widgets()
-        tela.ids.relatorio_container.add_widget(
-            MDLabel(text=texto, adaptive_height=True)
-        )
+        if os.path.exists("historico.json"):
 
-    # --------------------------
-    # GRÁFICO DASHBOARD COMPLETO
-    # --------------------------
-    def gerar_grafico(self):
+            with open("historico.json", "r") as f:
+                historico = json.load(f)
 
-        tela = self.root.get_screen("historico")
-        layout = tela.ids.relatorio_container
-        layout.clear_widgets()
+        historico.append({
+            "usuario": self.usuario_logado,
+            "produto": produto,
+            "quantidade": qtd
+        })
 
-        dados = []
+        with open("historico.json", "w") as f:
+            json.dump(historico, f)
 
-        if os.path.exists("produtos.json"):
-            with open("produtos.json", "r", encoding="utf-8") as f:
-                dados = json.load(f)
-
-        if not dados:
-            layout.add_widget(MDLabel(text="Nenhum produto cadastrado."))
-            return
-
-        scroll = ScrollView(
-            do_scroll_x=True,
-            do_scroll_y=False,
-            size_hint=(1, None),
-            height=dp(420)
-        )
-
-        grafico = Widget(size_hint=(None, None), height=dp(400))
-        grafico.width = dp(len(dados) * 100)
-
-        scroll.add_widget(grafico)
-        layout.add_widget(scroll)
-
-        max_qtd = max(p["quantidade"] for p in dados)
-
-        largura_barra = dp(50)
-        espacamento = dp(40)
-        base_x = dp(60)
-        base_y = dp(100)
-
-        barras = []
-
-        with grafico.canvas:
-
-            # Linha base
-            Color(0.7, 0.7, 0.7, 1)
-            Rectangle(pos=(dp(30), base_y - dp(5)), size=(grafico.width, dp(2)))
-
-            for i, produto in enumerate(dados):
-
-                qtd = produto["quantidade"]
-                altura_final = (qtd / max_qtd) * dp(220)
-
-                x = base_x + i * (largura_barra + espacamento)
-                y = base_y
-
-                r = 0.3 + random() * 0.7
-                g = 0.3 + random() * 0.7
-                b = 0.3 + random() * 0.7
-
-                Color(r, g, b, 1)
-                barra = Rectangle(pos=(x, y), size=(largura_barra, 0))
-                barras.append((barra, altura_final))
-
-        # animação
-        for barra, altura in barras:
-            Animation(size=(barra.size[0], altura), duration=0.8).start(barra)
-
-        # labels
-        for i, produto in enumerate(dados):
-
-            qtd = produto["quantidade"]
-            altura = (qtd / max_qtd) * dp(220)
-
-            x = base_x + i * (largura_barra + espacamento)
-
-            valor_label = MDLabel(
-                text=str(qtd),
-                halign="center",
-                size_hint=(None, None),
-                size=(largura_barra, dp(30)),
-                pos=(x, base_y + altura + dp(5)),
-            )
-
-            nome_label = MDLabel(
-                text=produto["nome"],
-                halign="center",
-                size_hint=(None, None),
-                size=(largura_barra + dp(20), dp(40)),
-                pos=(x - dp(10), dp(30)),
-                theme_text_color="Secondary"
-            )
-
-            grafico.add_widget(valor_label)
-            grafico.add_widget(nome_label)
-
-    # --------------------------
-    # TROCAR TELAS
-    # --------------------------
+    # ABRIR HISTÓRICO
     def abrir_historico(self):
+
+        tela = self.root.get_screen("historico")
+
+        tela.ids.relatorio_container.clear_widgets()
+
+        if os.path.exists("historico.json"):
+
+            with open("historico.json", "r") as f:
+
+                historico = json.load(f)
+
+                for h in historico:
+
+                    texto = f"{h['usuario']} retirou {h['quantidade']} {h['produto']}"
+
+                    tela.ids.relatorio_container.add_widget(
+                        MDLabel(
+                            text=texto,
+                            adaptive_height=True
+                        )
+                    )
+
         self.root.current = "historico"
 
     def voltar_estoque(self):
+
         self.root.current = "estoque"
 
 
